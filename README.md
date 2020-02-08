@@ -5,6 +5,7 @@ Bild und Video-Kolorierung mittels CNN
 Dieses Projekt soll mittels Deeplearning-Technologien Graustufen-Videos in Farbvideos konvertieren. Hierbei soll der Fokus nicht auf einer möglichst exakten Reproduktion der realen Farben liegen sondern das Video glaubhafte Farben darstellen.
 
 # Related Work
+Colorful Image Colorization
 
 
 # Datensätze
@@ -30,7 +31,6 @@ http://www.image-net.org/
 Alle Bilder werden vom RGB in den LAB-Farbraum konvertiert. Dafür wird das OpenCV-Framework verwendet. Die Bilder werden zunächst von uInt8 nach float32 konvertiert und auf einen Bereich von 0-1 normalisiert. Anschließend werden sie in den LAB-Farbraum konvertiert. Dort liegen der L-Wert zwischen 0 und 100, a und b zwischen -127 und 127. a und b werden auf -1 bis 1 normalisiert und l auf 0 bis 1. Der L-Kanal dient dann als Eingabe für die Modelle.
 Es wurden ebenfalls Experimente mit einer Sigmoid-Funktion als Aktivierung des letzten Layers der Modelle durchgeführt. Hier wurden dann die a und b-Werte zwischen 0 und 1 normalisiert.
 
-
 # Architekturen
 
 ## Generelle Informationen
@@ -42,8 +42,12 @@ Da die ersten Ergebnisse auf Basis von Regressionsverfahren (MSE-Loss, L1-Loss u
 Bei der Regression wird das Modell darauf trainiert die zwei Farbkanäle a und b des LAB Farbraums auf Basis der Eingabe des L-Kanals vorherzusagen. Als Fehler wird dabei auf Basis einer Distanzmetrik (In diesem Fall L2-Loss) zwischen Eingabe und Ausgabe bestimmt. 
 
 ### Klassifikation
+Kolorierung auf Basis eines Regressionsverfahrens funktioniert häufig nicht gut. Das hat sich in den durchgeführten Experimenten und im Paper Colorful Image Colorization gezeigt. Der berechnete Fehler benachteiligt weniger häufig vorkommende Farben und zieht das Bild in einen Sepia-Grauton. Dieses Problem kann umgangen werden, indem statt der zwei Farbkanäle eine Wahrscheinlichkeitsverteilung über Farb-Bins vorhergesagt wird und das Problem als Klassifikationsproblem betrachtet wird.
+Statt den Fehler zwischen zwei Farbwerten zu bestimmen, wird der Fehler zwischen zwei Farb-Wahrscheinlichkeiten berechnet. 
+Hinzukommt, dass der Fehler auf Basis der am seltensten vorkommenden Farben weiter gewichtet wird. Damit können unterrepräsentierte Farben verstärkt werden. Das Modell sagt damit deutlich gesättigte Bilder vorher. 
 
-
+Die Lossfunktion ist in diesem Fall:
+todo loss-funktion einfügen
 
 ## U-Net CNN
 
@@ -64,6 +68,7 @@ Für das Training wurden folgende Parameter bei allen Architekturen gewählt:
 |  Optimizer   |  ADAM  |
 | Batchsize    | 32-256 |
 | Sequenzlänge | 16-64  |
+| Lossfunktion |   MSE  |
 
 # Technische Herausforderungen
 
@@ -74,14 +79,17 @@ Da Videos meist zu lang sind, um sie vollständig in einem Sample zu verarbeiten
 Pytorch unterstützt mit den Basisfunktionen nicht das inkrementelle Laden von Daten aus mehrere Streams. Daher musste für das Training ein Dataloader mit Multiprocessing implementiert werden, der parallel mehrere Videos lädt und über ein Flag das Modell informieren kann, ob ein Video beendet wurde. Diese Implementierung ist leider nicht performant genug um eine Grafikkarte vollständig auszulasten. Daher wurde in den Trainings immer nur ein Video zur Zeit geladen und verarbeitet.
 
 
+
 # Ergebnisse und Evaluation
 Zur Evaluation der kolorierten Bilder und Videos gibt es keine Metrik, die die Genauigkeit des Modells misst. Verwandte Arbeiten haben hierfür Befragungen durchgeführt (TODO Colorful Image Colorization einfügen) und auf Basis der Befragungsergebnisse die Güte ihres Modells bewertet. 
 
+
 ## Beispielbilder
 
-
 # Diskussion
-Die Kolorierung funktioniert nur in seltenen Fällen wirklich gut. Häufig sind sind die Farben wenig gesättigt und  Vermutlich liegt dies am Training auf entweder nur Bildern oder der geringen Varianz in den Daten aus den Youtube-Videos. Da die LSTM-Modelle sich nur auf Videos wirklich evaluieren lassen, wurden auch nur dort Videos als Trainingsmaterial verwendet. Die Videos sind häufig 
+Die Kolorierung funktioniert nur in seltenen Fällen wirklich gut. Häufig sind sind die Farben wenig gesättigt und häufig fehlerhaft. Wenn ein Modell auf ImageNet- oder STL10-Daten trainiert wurde sehen die Ergebnisse auf dem Validierungs-Set häufig besser aus als auf ausgewählten Videos. Vermutlich liegt dies an den deutlichen Unterschieden und Ansätzen der Datensätze. Die Daten aus ImageNet und STL10 sollen immer in den Bildern die Klasse des dargestellten Objekts erkennen lassen wohingegen der Youtube-Datensatz nur aus zufälligen Videos besteht. In diesen Videos kann es vorkommen, dass bestimmte Klassen nicht vorkommen.  
+
+Vermutlich liegt dies am Training auf entweder nur Bildern oder der geringen Varianz in den Daten aus den Youtube-Videos. Da die LSTM-Modelle sich nur auf Videos wirklich evaluieren lassen, wurden auch nur dort Videos als Trainingsmaterial verwendet. Die Videos sind häufig 
 
 
 
