@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hist-mean-job
+spec:
+  parallelism: 100
+  template:
+    spec:
+      containers:
+        - name: hist-mean-job
+          image: registry.datexis.com/s76413/hist-mean-job
+          volumeMounts:
+            - name: fsmount
+              mountPath: /network-ceph   
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          command: ["python3", "job.py"]
+          resources:
+            requests:
+              cpu: 2
+      volumes:
+        - name: fsmount                                              
+          flexVolume:                                                
+            driver: ceph.rook.io/rook                                
+            fsType: ceph                                             
+            options:                                                 
+              fsName: home                                           
+              clusterNamespace: rook-ceph
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

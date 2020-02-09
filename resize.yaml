@@ -1,0 +1,40 @@
+metadata:
+  name: color-model
+  labels:
+    app: color-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: color-model
+  template:
+    metadata:
+      labels:
+        app: color-model
+    spec:
+      containers:
+        - name: color-model
+          image: jrottenberg/ffmpeg:4.1-ubuntu 
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          - name: VIDEOPATH
+            value: '/pvc'
+          resources:      
+            requests:
+              cpu: 1
+          command: ["/bin/sh", "-ec", "while :; do echo '.'; sleep 5 ; done"]
+
+          volumeMounts:
+            - name: fsmount 
+              mountPath: /networkceph
+      volumes:
+        - name: fsmount
+          flexVolume:
+            driver: ceph.rook.io/rook
+            fsType: ceph
+            options:
+              fsName: home
+              clusterNamespace: rook-ceph
+      imagePullSecrets:
+        - name: private-registry-auth

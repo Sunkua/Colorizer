@@ -1,0 +1,48 @@
+piVersion: apps/v1
+kind: Deployment
+metadata:
+  name: color-model
+  labels:
+    app: color-model
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: color-model
+  template:
+    metadata:
+      labels:
+        app: color-model
+    spec:
+      containers:
+        - name: color-model
+          image: willprice/nvidia-ffmpeg:latest 
+          command: [ "sleep" ]
+          args: [ "infinity" ]
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          - name: VIDEOPATH
+            value: '/pvc'
+          resources:      
+            requests:
+              cpu: 1
+            limits:
+              memory: "512G"
+              nvidia.com/gpu: 1  
+          volumeMounts:
+            - name: youtube-8m-big-pvc
+              mountPath: /pvc
+            - name: dshm
+              mountPath: /dev/shm
+      nodeSelector:
+        gpu: v100
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: youtube-8m-big-pvc
+          persistentVolumeClaim:
+            claimName: youtube-8m-big-pvc
+      imagePullSecrets:
+        - name: private-registry-auth

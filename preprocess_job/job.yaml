@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: preprocess-job
+spec:
+  parallelism: 48
+  template:
+    spec:
+      containers:
+        - name: preprocess-job
+          image: registry.datexis.com/s76413/preprocess-job
+          volumeMounts:
+            - name: fsmount
+              mountPath: /network-ceph   
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          command: ["python3", "job.py"]
+          resources:
+            requests:
+              cpu: 1
+              memory: "32Gi"
+            limits: 
+              cpu: 2
+              memory: "64Gi"
+      volumes:
+        - name: fsmount                                              
+          flexVolume:                                                
+            driver: ceph.rook.io/rook                                
+            fsType: ceph                                             
+            options:                                                 
+              fsName: home                                           
+              clusterNamespace: rook-ceph
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

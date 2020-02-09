@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: classification-nolstm-imagenet-training
+spec:
+  parallelism: 1
+  template:
+    spec:
+      containers:
+        - name: classificaton-nolstm-imagenet-job
+          image: registry.datexis.com/s76413/colormodel
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: fsmount
+              mountPath: /network-ceph   
+            - name: dshm
+              mountPath: /dev/shm
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          command: ["python3", "training_lstm.py"]
+          args: ["--trainingtype", "classification","--no_lstm","--imagenet", "--experiment_name", "cnn_classification_imagenet", "--steps_per_epoch" , '25000']
+      nodeSelector:
+        gpu: v100
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: fsmount                                              
+          flexVolume:                                                
+            driver: ceph.rook.io/rook                                
+            fsType: ceph                                             
+            options:                                                 
+              fsName: home                                           
+              clusterNamespace: rook-ceph
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never

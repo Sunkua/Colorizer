@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: resize-job
+spec:
+  parallelism: 62
+  template:
+    spec:
+      containers:
+        - name: resize-job
+          image: registry.datexis.com/s76413/resizejob
+          volumeMounts:
+            - name: fsmount
+              mountPath: /networkceph   
+          env:
+          - name: LANG
+            value: 'C.UTF-8'
+          
+          command: ["python3", "run_padding_job.py"]
+          resources:
+            requests:
+              cpu: 4
+      volumes:
+        - name: fsmount                                              
+          flexVolume:                                                
+            driver: ceph.rook.io/rook                                
+            fsType: ceph                                             
+            options:                                                 
+              fsName: home                                           
+              clusterNamespace: rook-ceph
+      imagePullSecrets:
+        - name: private-registry-auth
+      restartPolicy: Never
