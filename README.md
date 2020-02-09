@@ -2,10 +2,20 @@
 Bild und Video-Kolorierung mittels CNN
 
 # Problembeschreibung
-Dieses Projekt soll mittels Deeplearning-Technologien Graustufen-Videos in Farbvideos konvertieren. Hierbei soll der Fokus nicht auf einer möglichst exakten Reproduktion der realen Farben liegen sondern das Video glaubhafte Farben darstellen.
+Dieses Projekt soll mittels Deeplearning-Technologien Graustufen-Videos in Farbvideos konvertieren. Hierbei soll der Fokus nicht auf einer möglichst exakten Reproduktion der realen Farben liegen sondern das Video in glaubhaften Farben darstellen.
 
 # Related Work
-Colorful Image Colorization
+Es existieren bereits mehrere Ansätze zur Kolorierung von Bildern und Videos:
+
+## Kolorierung von Videos:
+
+### DeepRemaster: Temporal Source-Reference Attention Networks for Comprehensive Video Enhancement (Satoshi Iizuka, Edgar Simo-Serra): http://iizuka.cs.tsukuba.ac.jp/projects/remastering/data/remastering_siggraphasia2019.pdf
+Verwendet Temporal Convolutional Neural Networks zur Kolorierung von Videosequenzen statt RNNs.
+
+## Kolorierung von Bildern:
+### Colorful Image Colorization(Richard Zhang, Phillip Isola, Alexei A. Efros): https://arxiv.org/abs/1603.08511
+Bild-Kolorierung mittels eines Klassifikationsansatzes
+
 
 
 # Datensätze
@@ -46,8 +56,6 @@ Kolorierung auf Basis eines Regressionsverfahrens funktioniert häufig nicht gut
 Statt den Fehler zwischen zwei Farbwerten zu bestimmen, wird der Fehler zwischen zwei Farb-Wahrscheinlichkeiten berechnet. 
 Hinzukommt, dass der Fehler auf Basis der am seltensten vorkommenden Farben weiter gewichtet wird. Damit können unterrepräsentierte Farben verstärkt werden. Das Modell sagt damit deutlich gesättigte Bilder vorher. 
 
-Die Lossfunktion ist in diesem Fall:
-todo loss-funktion einfügen
 
 ## U-Net CNN
 
@@ -60,28 +68,40 @@ todo loss-funktion einfügen
 ## Größeres U-Net CNN mit Batchnorm
 
 ## Trainingsparameter
-Für das Training wurden folgende Parameter bei allen Architekturen gewählt:
+
+### Regressionsmodelle
 
 | Parameter    | Wert   |
 |--------------|--------|
 |     LR       |  1e-4  |
 |  Optimizer   |  ADAM  |
-| Batchsize    | 32-256 |
-| Sequenzlänge | 16-64  |
+| Batchsize    | 256    |
+| Sequenzlänge | Batchsize  |
 | Lossfunktion |   MSE  |
+
+### Klassifikationsmodelle
+| Parameter    | Wert   |
+|--------------|--------|
+|     LR       |  1e-4  |
+|  Optimizer   |  ADAM  |
+| Batchsize    |   256  |
+| Sequenzlänge | Batchsize  |
+| Lossfunktion |   Multinomial Cross-Entropy  |
+
+Anmerkung zur Loss-Funktion:
+Die Loss-Funktion wurde auf Basis des Papers Colorful Image Colorization implementiert. Dabei handelt es sich um eine Variante des Cross-Entropy-Loss, die im Gegensatz zur Pytorch-Implementierung auch Soft-Encodings als Target verarbeiten kann.
 
 # Technische Herausforderungen
 
 ## Stateful LSTM
-Da Videos meist zu lang sind, um sie vollständig in einem Sample zu verarbeiten, kann das Training und die Inferenz durch Zwischenspeichern der LSTM-States verkürzt werden. Anstelle des Zurücksetzens der States nach jedem Batch, wird für jedes Video der entsprechende Zustand mit in das Modell gegeben. Erst wenn ein Video zuende ist, wird der Zustand genullt. 
+Da Videos meist zu lang sind, um sie vollständig in einem Sample zu verarbeiten, kann das Training und die Inferenz durch Zwischenspeichern der LSTM-States verkürzt werden. Anstelle des Zurücksetzens der States nach jedem Batch, wird für jedes Video der entsprechende Zustand mit in das Modell gegeben. Erst wenn ein Video beendet ist, wird der Zustand genullt.
 
 ## Dataloader für Stateful LSTMs
-Pytorch unterstützt mit den Basisfunktionen nicht das inkrementelle Laden von Daten aus mehrere Streams. Daher musste für das Training ein Dataloader mit Multiprocessing implementiert werden, der parallel mehrere Videos lädt und über ein Flag das Modell informieren kann, ob ein Video beendet wurde. Diese Implementierung ist leider nicht performant genug um eine Grafikkarte vollständig auszulasten. Daher wurde in den Trainings immer nur ein Video zur Zeit geladen und verarbeitet.
-
+Pytorch unterstützt mit den Basisfunktionen nicht das inkrementelle Laden von Daten aus mehrere Streams. Daher musste für das Training ein Dataloader mit Multiprocessing implementiert werden, der parallel mehrere Videos lädt und über ein Flag das Modell informieren kann, ob ein Video beendet wurde. Diese Implementierung ist leider nicht performant genug um eine Grafikkarte vollständig auszulasten. Aus diesem Grund wurde in den Trainings immer nur ein Video zur Zeit geladen und verarbeitet.
 
 
 # Ergebnisse und Evaluation
-Zur Evaluation der kolorierten Bilder und Videos gibt es keine Metrik, die die Genauigkeit des Modells misst. Verwandte Arbeiten haben hierfür Befragungen durchgeführt (TODO Colorful Image Colorization einfügen) und auf Basis der Befragungsergebnisse die Güte ihres Modells bewertet. 
+Zur Evaluation der kolorierten Bilder und Videos gibt es keine Metrik, die die Genauigkeit des Modells misst. Verwandte Arbeiten haben hierfür Befragungen durchgeführt (vgl. Zhang et al. Colorful Image Colorization) und auf Basis der Befragungsergebnisse die Güte ihres Modells bewertet. 
 
 
 ## Beispielbilder
