@@ -1,8 +1,43 @@
 # Colorizer
 Bild und Video-Kolorierung mittels CNN
 
+# How to run
+
+Benötigte Dependencies:
+- Python3
+- Pytorch
+- Torchvision
+- OpenCV
+- Scikit-Learn
+- Scikit-Video
+- Numpy
+- H5py
+- Hdf5plugin
+
+Das Projekt ist in Docker und Im  lauffähig. Dazu das Dockerimage mit `docker build -t "imagename" .` bauen. 
+Anschließend das Image in die Docker-Registry der Beuth-Hochschule oder die Datexis-Registry pushen.
+Die Pfade im Projekt sollten für alle Deployments im Kubernetes erreichbar sein. 
+Alternativ müssen die Pfade in den Dateien ImageDataset, VideoDataset und train_lstm.py angepasst werden.
+Das Projekt setzt eine Grafikkarte mit Cuda-Unterstützung voraus. 
+
+## Parametrierung
+Das Trainining der Modelle kann mit folgenden Parametern eingestellt werden:
+|        Flag       |                    Default                    |   Typ  |                                     Beschreibung                                    |
+|:-----------------:|:---------------------------------------------:|:------:|:-----------------------------------------------------------------------------------:|
+|   --trainingtype  |                  'regression'                 | String |                      Entweder 'regression' oder 'classification'                    |
+|      --epochs     |                       20                      |   Int  |                                  Anzahl der Epochen                                 |
+|    --batchsize    |                      256                      |   Int  |                                 Batchsize einstellen                                |
+|  --eval_savepath  | '/network-ceph/pgrundmann/video_evaluations/' | String |    Basispfad der Videos, die nach jeder Epoche als Evaluation gespeichert werden    |
+| --experiment_name |                     'lstm'                    | String |                  Name des Experiments. Erscheint so im Tensorboard                  |
+| --steps_per_epoch |                       -1                      |   Int  |   Anzahl der Schritte pro Epoche. Gerade bei Videos dauert eine Epoche sehr lange   |
+|     --no_lstm     |                       -                       |    -   |                                 LSTM nicht benutzen                                 |
+|     --stateful    |                       -                       |    -   | Stateful-LSTM-Implementierung verwenden (Kann nicht mit --no_lstm verwendet werden) |
+|     --imagenet    |                       -                       |    -   |                 Verwendet den ImageNet-Datensatz als Trainingsdaten                 |
+
 # Problembeschreibung
 Dieses Projekt soll mittels Deeplearning-Technologien Graustufen-Videos in Farbvideos konvertieren. Hierbei soll der Fokus nicht auf einer möglichst exakten Reproduktion der realen Farben liegen sondern das Video in glaubhaften Farben darstellen.
+
+
 
 # Related Work
 Es existieren bereits mehrere Ansätze zur Kolorierung von Bildern und Videos:
@@ -52,20 +87,19 @@ Da die ersten Ergebnisse auf Basis von Regressionsverfahren (MSE-Loss, L1-Loss u
 Bei der Regression wird das Modell darauf trainiert die zwei Farbkanäle a und b des LAB Farbraums auf Basis der Eingabe des L-Kanals vorherzusagen. Als Fehler wird dabei auf Basis einer Distanzmetrik (In diesem Fall L2-Loss) zwischen Eingabe und Ausgabe bestimmt. 
 
 ### Klassifikation
-Kolorierung auf Basis eines Regressionsverfahrens funktioniert häufig nicht gut. Das hat sich in den durchgeführten Experimenten und im Paper Colorful Image Colorization gezeigt. Der berechnete Fehler benachteiligt weniger häufig vorkommende Farben und zieht das Bild in einen Sepia-Grauton. Dieses Problem kann umgangen werden, indem statt der zwei Farbkanäle eine Wahrscheinlichkeitsverteilung über Farb-Bins vorhergesagt wird und das Problem als Klassifikationsproblem betrachtet wird.
-Statt den Fehler zwischen zwei Farbwerten zu bestimmen, wird der Fehler zwischen zwei Farb-Wahrscheinlichkeiten berechnet. 
-Hinzukommt, dass der Fehler auf Basis der am seltensten vorkommenden Farben weiter gewichtet wird. Damit können unterrepräsentierte Farben verstärkt werden. Das Modell sagt damit deutlich gesättigte Bilder vorher. 
+Kolorierung auf Basis eines Regressionsverfahrens funktioniert häufig nicht gut. Das hat sich in den durchgeführten Experimenten und im Paper Colorful Image Colorization gezeigt. Der berechnete Fehler benachteiligt weniger häufig vorkommende Farben und zieht das Bild in einen Sepia-Grauton. Dieses Problem kann umgangen werden indem das Problem als Klassifikationsproblem betrachtet wird. Dabei werden statt der zwei Farbkanäle die Wahrscheinlichkeiten von Farbbins über die quantisierten ab-Farbkanäle ausgegeben. Der Fehler wird dabei zusätzlich pro Kanal-Bin gewichtet. Die Gewichte setzen sich aus den Gegenwahrscheinlichkeiten aller ab-Histogramme über die gewählten Bins über alle Bilder des Datensatzes zusammen.
+Im Projekt wurden die Gewichte aus den Bildern der ImageNet-Datensatzes berechnet. 
+
+Die Wahrscheinlichkeiten können anschließend gewichtet gemittelt werden. Hierzu dient ein Parameter T der, je kleiner er ist, der Bild stärker gesättigt erscheinen lässt.
+
+# Architekturen
+
+## U-Net (Vgg-Like)
+
+## U-Net + LSTM
 
 
-## U-Net CNN
 
-## U-Net CNN + Feature-Vektor
-
-## U-Net CNN + LSTM (Stateful und nicht Stateful)
-
-## U-Net CNN + Feature-Vektor + LSTM (Stateful und nicht Stateful)
-
-## Größeres U-Net CNN mit Batchnorm
 
 ## Trainingsparameter
 
@@ -104,12 +138,21 @@ Pytorch unterstützt mit den Basisfunktionen nicht das inkrementelle Laden von D
 Zur Evaluation der kolorierten Bilder und Videos gibt es keine Metrik, die die Genauigkeit des Modells misst. Verwandte Arbeiten haben hierfür Befragungen durchgeführt (vgl. Zhang et al. Colorful Image Colorization) und auf Basis der Befragungsergebnisse die Güte ihres Modells bewertet. 
 
 
+## Nicht verwendete Experimente
+Es wurden weiterhin Experimente mit bereits vortrainierten Modellen durchgeführt. Hierbei wurde zusätzlich zum LSTM noch ein Featurevektor bestehend aus dem vorletzten Layer von ResNext auf Basis des Graustufen-Bildes mit in den ersten Decoder-Convolution-Layer eingefügt. Die Experimente resultierten allerdings immer in Artefakten oder Graustufen-Bildern, sodass dieser Ansatz verworfen wurde.
+
 ## Beispielbilder
+
+TODO: Beispielbilder und Videos einfügen 
 
 # Diskussion
 Die Kolorierung funktioniert nur in seltenen Fällen wirklich gut. Häufig sind sind die Farben wenig gesättigt und häufig fehlerhaft. Wenn ein Modell auf ImageNet- oder STL10-Daten trainiert wurde sehen die Ergebnisse auf dem Validierungs-Set häufig besser aus als auf ausgewählten Videos. Vermutlich liegt dies an den deutlichen Unterschieden und Ansätzen der Datensätze. Die Daten aus ImageNet und STL10 sollen immer in den Bildern die Klasse des dargestellten Objekts erkennen lassen wohingegen der Youtube-Datensatz nur aus zufälligen Videos besteht. In diesen Videos kann es vorkommen, dass bestimmte Klassen nicht vorkommen.  
 
-Vermutlich liegt dies am Training auf entweder nur Bildern oder der geringen Varianz in den Daten aus den Youtube-Videos. Da die LSTM-Modelle sich nur auf Videos wirklich evaluieren lassen, wurden auch nur dort Videos als Trainingsmaterial verwendet. Die Videos sind häufig 
+
+## Ausblick
+
+Um ein funktionierendes Modell zu trainieren muss zunächst ein besserer Videodatensatz gefunden werden. Weiterhin müssen die Videos parallel im Training vom Modell gesehen werden, da ansonsten das Modell nur auf dem aktuell gezeigten Video overfittet. 
+Es kann außerdem darüber nachgedacht werden das LSTM durch einen Attention-Mechanismus zu ersetzen oder Temporal Convolutional Neural Networks zu verwenden (vgl. Temporal Source-Reference Attention Networks for Comprehensive Video Enhancement (Satoshi Iizuka, Edgar Simo-Serra)). Allerdings sind die Kontexte in beiden Ansätzen begrenzt. Es kann also auch hier vorkommen, dass das Modell nach der Länge des Kontexts plötzlich eine wahrnehmbar andere Farbgebung wählt.
 
 
 
