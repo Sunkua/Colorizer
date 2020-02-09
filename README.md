@@ -136,6 +136,9 @@ Da Videos meist zu lang sind, um sie vollständig in einem Sample zu verarbeiten
 ## Dataloader für Stateful LSTMs
 Pytorch unterstützt mit den Basisfunktionen nicht das inkrementelle Laden von Daten aus mehrere Streams. Daher musste für das Training ein Dataloader mit Multiprocessing implementiert werden, der parallel mehrere Videos lädt und über ein Flag das Modell informieren kann, ob ein Video beendet wurde. Diese Implementierung ist leider nicht performant genug um eine Grafikkarte vollständig auszulasten. Aus diesem Grund wurde in den Trainings immer nur ein Video zur Zeit geladen und verarbeitet.
 
+## Training
+Das Training der Modelle dauert abhängig vom gewählten Datensatz sehr lange. Das Regressionsverfahren liefert auf dem ImageNet-Datensatz nach ca. 5-15 Epochen gute Bilder.  Die Klassifikation fängt bereits nach 2-3 Epochen an gute Ergebnisse zu liefern, ist jedoch teilweise deutlich ungenauer.
+
 
 # Ergebnisse und Evaluation
 Zur Evaluation der kolorierten Bilder und Videos gibt es keine Metrik, die die Genauigkeit des Modells misst. Verwandte Arbeiten haben hierfür Befragungen durchgeführt (vgl. Zhang et al. Colorful Image Colorization) und auf Basis der Befragungsergebnisse die Güte ihres Modells bewertet. 
@@ -150,6 +153,7 @@ TODO: Beispielbilder und Videos einfügen
 
 # Diskussion
 Die Kolorierung funktioniert nur in seltenen Fällen wirklich gut. Häufig sind sind die Farben wenig gesättigt und häufig fehlerhaft. Wenn ein Modell auf ImageNet- oder STL10-Daten trainiert wurde sehen die Ergebnisse auf dem Validierungs-Set häufig besser aus als auf ausgewählten Videos. Vermutlich liegt dies an den deutlichen Unterschieden und Ansätzen der Datensätze. Die Daten aus ImageNet und STL10 sollen immer in den Bildern die Klasse des dargestellten Objekts erkennen lassen wohingegen der Youtube-Datensatz nur aus zufälligen Videos besteht. In diesen Videos kann es vorkommen, dass bestimmte Klassen nicht vorkommen.  
+Auch sehen die Ergebnisse der Videos besser aus, wenn die Modelle nur auf den beiden Bild-Datensätzen trainiert werden. Das deutet ebenfalls darauf hin, dass der Youtube-Datensatz keine ausreichende Qualität aufweist. Alternativ kann die Ursache noch beim LSTM-Layer liegen, der unter Umständen nur Rauschen in die Daten einfügt und das Ergebnis hinsichtlich der Kolorierung negativ verfälscht.
 
 
 ## Ausblick
