@@ -94,6 +94,9 @@ Die Wahrscheinlichkeiten können anschließend gewichtet gemittelt werden. Hierz
 
 # Architekturen
 
+![Architektur mit und Ohne LSTM](maschinelles_sehen_architektur.png)
+
+
 ## U-Net (Vgg-Like)
 
 ## U-Net + LSTM
