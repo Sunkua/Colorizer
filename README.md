@@ -161,7 +161,8 @@ Auch sehen die Ergebnisse der Videos besser aus, wenn die Modelle nur auf den be
 Um ein funktionierendes Modell zu trainieren muss zunächst ein besserer Videodatensatz gefunden werden. Weiterhin müssen die Videos parallel im Training vom Modell gesehen werden, da ansonsten das Modell nur auf dem aktuell gezeigten Video overfittet. 
 Es kann außerdem darüber nachgedacht werden das LSTM durch einen Attention-Mechanismus zu ersetzen oder Temporal Convolutional Neural Networks zu verwenden (vgl. Temporal Source-Reference Attention Networks for Comprehensive Video Enhancement (Satoshi Iizuka, Edgar Simo-Serra)). Allerdings sind die Kontexte in beiden Ansätzen begrenzt. Es kann also auch hier vorkommen, dass das Modell nach der Länge des Kontexts plötzlich eine wahrnehmbar andere Farbgebung wählt.
 
-
+Ein weiterer Aspekt der Verbesserung bringen würde, wäre die entsprechende Parametrierung der Loss-Funktion Tanh im letzten Layer der Regressions-Modell-Architekturen. Der Ausgabewert dieser Funktion liegt zwischen -1 und 1. Das Problem ist, dass der LAB-Farbraum deutlich mehr Farben abdeckt als der sRGB-Farbraum und es daher zu Artefakten kommen kann, wenn die Aktivierung für a oder b Werte annimmt, die außerhalb des sRGB-Zielfarbraums liegen. Würde mann die Lossfunktion in ihrem Wertebereich beschränken, so könnten diese Artefakte vermieden werden. 
+Das Selbe gilt für die Quantisierung des ab-Farbraums in den Klassifikationsmodellen. Dort müssten die Histogramme für die Gewichte und die Quantisierung entsprechend des darstellbaren sRGB-Farbraums erstellt werden.
 
 
 
